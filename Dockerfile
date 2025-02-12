@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
 
 # 기본 환경 설정
 ENV DEBIAN_FRONTEND=noninteractive
@@ -16,11 +16,8 @@ RUN apt-get update && apt-get install -y \
     && ln -sf /usr/bin/pip3 /usr/bin/pip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# ComfyUI 및 필수 라이브러리 설치
-RUN pip install comfy-cli runpod requests
-
-# ComfyUI 설치
-RUN /usr/bin/yes | comfy --workspace /comfyui install --cuda-version 11.8 --nvidia --version 0.2.7
+# 필요한 Python 패키지 설치
+RUN pip install runpod requests
 
 # 작업 디렉토리 설정
 WORKDIR /comfyui
@@ -33,5 +30,9 @@ RUN chmod +x /restore_snapshot.sh && /restore_snapshot.sh
 # RunPod 핸들러 복사
 COPY src/rp_handler.py /
 
-# 시작 스크립트
-CMD ["/start.sh"]
+# 시작 스크립트 복사 및 실행 권한 부여
+COPY src/start.sh /
+RUN chmod +x /start.sh
+
+# RunPod 핸들러를 직접 실행
+CMD ["python", "/rp_handler.py"]
