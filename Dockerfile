@@ -16,27 +16,22 @@ RUN apt-get update && apt-get install -y \
     && ln -sf /usr/bin/pip3 /usr/bin/pip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 필요한 Python 패키지 설치
-RUN pip install -r /tmp/requirements.txt
-
 # 작업 디렉토리 설정
-WORKDIR /comfyui
+WORKDIR /app
 
 # 필요한 파일들 복사
-COPY src/rp_handler.py /comfyui/
-COPY start.sh /comfyui/
-RUN chmod +x /comfyui/start.sh
+COPY src/ /app/
+COPY requirements.txt /app/
 
-# 시작 스크립트 내용
-RUN echo '#!/bin/bash\n\
-cd /workspace/ComfyUI\n\
-python main.py --port 8188 &\n\
-sleep 10\n\
-python /comfyui/rp_handler.py\n\
-' > /comfyui/start.sh
+# Python 패키지 설치
+RUN pip install -r requirements.txt
 
-# 실행 권한 부여
-RUN chmod +x /comfyui/start.sh
+# 스크립트 실행 권한 부여
+RUN chmod +x /app/start.sh
+RUN chmod +x /app/restore_snapshot.sh
+
+# 스냅샷 복원 (실행 실패해도 빌드 중단하지 않도록 설정)
+RUN /app/restore_snapshot.sh || true
 
 # RunPod 핸들러를 직접 실행
-CMD ["/comfyui/start.sh"]
+CMD ["/app/start.sh"]
