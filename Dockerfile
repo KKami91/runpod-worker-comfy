@@ -20,19 +20,18 @@ RUN apt-get update && apt-get install -y \
 RUN pip install runpod requests
 
 # 작업 디렉토리 설정
-WORKDIR /comfyui
+WORKDIR /app
 
-# 스냅샷 및 기타 파일 복사
-COPY *snapshot*.json /
-COPY src/restore_snapshot.sh /
-RUN chmod +x /restore_snapshot.sh && /restore_snapshot.sh
+# 필요한 파일들 복사
+COPY src/restore_snapshot.sh /app/
+COPY src/rp_handler.py /app/
+COPY *snapshot*.json /app/
 
-# RunPod 핸들러 복사
-COPY src/rp_handler.py /
+# 스크립트에 실행 권한 부여
+RUN chmod +x /app/restore_snapshot.sh
 
-# 시작 스크립트 복사 및 실행 권한 부여
-COPY src/start.sh /
-RUN chmod +x /start.sh
+# 스냅샷 복원 (실행 실패해도 빌드 중단하지 않도록 설정)
+RUN /app/restore_snapshot.sh || true
 
 # RunPod 핸들러를 직접 실행
-CMD ["python", "/rp_handler.py"]
+CMD ["python", "/app/rp_handler.py"]
